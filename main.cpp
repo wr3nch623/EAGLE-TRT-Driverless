@@ -12,7 +12,7 @@ using namespace std;
 int main(){
     //WindowManager *window = new WindowManager();
 	WindowManager window;
-	window.DrawCycle();
-
+	//window.DrawCycle();
+	window.FirstTask();
 	return 0;
 }
