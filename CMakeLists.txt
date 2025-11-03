@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 add_executable(Driverless 
     main.cpp
     include/WindowManager/windowmanager.cpp
+    include/BicycleController/bicyclecontroller.cpp
+
 )
 
 target_include_directories(Driverless PRIVATE

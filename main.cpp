@@ -13,8 +13,9 @@ int main(){
     //WindowManager *window = new WindowManager();
 	float windowWidth = 1680, windowHeight = 1050;
 	WindowManager* window = new WindowManager(windowWidth, windowHeight);
-	//window->DrawCycle();
+	//window->MainMenu();
 	window->FirstTask();
+	//window->SecondTask();
 	//window.DrawCycle();
 	//window.FirstTask();
 	delete window;

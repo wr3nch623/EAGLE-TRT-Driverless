@@ -9,6 +9,7 @@ class WindowManager{
         ~WindowManager();
         WindowManager(float, float);
 
-        int DrawCycle();
+        int MainMenu();
         int FirstTask();
+        int SecondTask();
 };
