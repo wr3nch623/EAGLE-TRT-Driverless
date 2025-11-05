@@ -1,7 +1,8 @@
 
 #include "../RayLib/raylib.h"                 // for Color
 #include "../BicycleController/bicyclecontroller.h"  // for BicycleController
-#include "../PController/pcontroller.h"
+//#include "../PController/pcontroller.h"
+#include "../PIDController/pidcontroller.h"
 
 
 enum GameState{
@@ -53,5 +54,6 @@ class WindowManager{
         GameState FirstTask(float &prevDelta, float &prevTheta, float &prevVelocity, float &prevWheelbase, BicycleController *bicycle);
         GameState SecondTask(float &prevDelta, float &prevTheta, float &prevVelocity, float &prevWheelbase, BicycleController *bicycle, PController *pcont, float &error);
         GameState ThirdTask(float &prevDelta, float &prevTheta, float &prevVelocity, float &prevWheelbase, BicycleController *bicycle, PController *pcont, float &error, float &errory);
+        GameState FourthTask(float &prevDelta, float &prevTheta, float &prevVelocity, float &prevWheelbase, BicycleController *bicycle, PIDController *pcont, float &error, float &errory);
 
     };
