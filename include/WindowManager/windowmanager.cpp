@@ -477,6 +477,11 @@ GameState WindowManager::SecondTask(float &prevDelta, float &prevTheta, float &p
 }
 
 
+GameState WindowManager::ThirdTask(){
+    
+}
+
+
 
 
 //GameState WindowManager::SecondTask(float &prevDelta, float &prevTheta, float &prevVelocity, float &prevWheelbase, BicycleController *bicycle, PController *pcont, float &error){

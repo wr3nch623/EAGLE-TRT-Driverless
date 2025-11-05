@@ -14,9 +14,8 @@ using namespace std;
 
 int main(){
     //WindowManager *window = new WindowManager();
-	float windowWidth = 1680, windowHeight = 1050;
+	float windowWidth = 1280, windowHeight = 650;
 	WindowManager* window = new WindowManager(windowWidth, windowHeight);
-	std::cout << std::endl;
 	window->Run();
 	//window->MainMenu();
 	//window->FirstTask();
