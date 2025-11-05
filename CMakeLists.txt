@@ -15,6 +15,8 @@ target_include_directories(Driverless PRIVATE
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/lib/RayLib
     ${CMAKE_SOURCE_DIR}/lib/WindowManager
+    ${CMAKE_SOURCE_DIR}/lib/BicycleController
+    ${CMAKE_SOURCE_DIR}/lib/PController
 )
 
 # Directly link the .a file
