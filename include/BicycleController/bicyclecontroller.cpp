@@ -21,6 +21,6 @@ void BicycleController::Update(float delta, float theta, float wheelbase, float 
 }
 
 void BicycleController::PStep(float frametime, float delta) {
-    this->delta = std::clamp(delta, -0.5f, 0.5f);
+    this->delta = std::clamp(delta, -0.6f, 0.6f);
     this->Step(frametime);
 }

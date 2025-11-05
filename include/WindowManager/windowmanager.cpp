@@ -81,16 +81,17 @@ void WindowManager::ResetPoints(){
 }
 
 int WindowManager::Run(){
-    GameState state = SECOND_TASK;
+    GameState state = THIRD_TASK;
     
     float screenWidth = 1680, screenHeight = 1050, scale = 0, fontSize = 0, dt = 0;
     const float baseFontSize = 32;
     bool first = true, error_msg = false, firstTaskBool = false;
-    float x = screenWidth/2, y = screenHeight/2, delta = 0.6, theta = 0.6, velocity = 100, wheelbase = 50, error = 0;
+    float x = screenWidth/2, y = screenHeight/2, delta = 0.6, theta = 0.6, velocity = 100, wheelbase = 50, error = 0, errory = 0;
     float prevDelta = delta, prevTheta = theta, prevVelocity = velocity, prevWheelbase = wheelbase;
 
     BicycleController *bicycle = new BicycleController(GetScreenWidth()/2, GetScreenHeight()/2, delta, theta, wheelbase, velocity);
     PController *pcont = new PController(2.5f); 
+    PController *pcontHeadDir = new PController(2.5f, 0.5f); 
 
 
     //ResetBicycle(delta, theta, wheelbase, velocity);
@@ -117,6 +118,10 @@ int WindowManager::Run(){
 
         case SECOND_TASK:
             state = SecondTask(prevDelta, prevTheta, prevVelocity, prevWheelbase, bicycle, pcont, error);
+            break;
+
+        case THIRD_TASK:
+            state = ThirdTask(prevDelta, prevTheta, prevVelocity, prevWheelbase, bicycle, pcontHeadDir, error, errory);
             break;
         
         default:
@@ -352,7 +357,7 @@ GameState WindowManager::FirstTask(float &prevDelta, float &prevTheta, float &pr
 
     return FIRST_TASK;
 }
-
+// This beautiful task was not working, while before it was... Why? idk, i just spent too much time on this i must move on.
 GameState WindowManager::SecondTask(float &prevDelta, float &prevTheta, float &prevVelocity, float &prevWheelbase, BicycleController *bicycle, PController *pcont, float &error){
 
         //--------------------------------------------------------------------------------------
@@ -477,8 +482,128 @@ GameState WindowManager::SecondTask(float &prevDelta, float &prevTheta, float &p
 }
 
 
-GameState WindowManager::ThirdTask(){
+GameState WindowManager::ThirdTask(float &prevDelta, float &prevTheta, float &prevVelocity, float &prevWheelbase, BicycleController *bicycle, PController *pcont, float &error, float &errory){
+
+        //--------------------------------------------------------------------------------------
+
+    //BicycleController *bicycle = new BicycleController(GetScreenWidth()/2, GetScreenHeight()/2, delta, theta, wheelbase, velocity);
     
+
+    // NOTE: Textures MUST be loaded after Window initialization (OpenGL context is required)
+
+    //---------------------------------------------------------------------------------------
+
+    // Main game loop
+    //while (!WindowShouldClose())    // Detect window close button or ESC key
+    //{
+
+        // Checking if the trajectory has exited the screen boundaries. In that case
+        // it will create a messagebox showing an error.
+        float delta, theta, velocity, wheel, x, y, dt, wheelbase, screenWidth, screenHeight;
+        bool error_msg = false, first = true;
+
+       //Random engine
+        std::mt19937 rng(std::random_device{}());
+    
+        // uniform distribution random values
+        std::uniform_real_distribution<double> dist(0.0, 1.0);
+
+        theta = bicycle->getTheta();
+        delta = bicycle->getDelta();
+        velocity = bicycle->getVelocity();
+        wheelbase = bicycle->getWheelBase();
+        x = bicycle->getX();
+        y = bicycle->getY();
+
+
+        dt = GetFrameTime();
+
+
+        screenWidth = GetScreenWidth();
+        screenHeight = GetScreenHeight();
+        if (x > screenWidth){
+            x = 0;
+            bicycle->setX(0);
+        }
+
+        
+
+    
+        /* Getting current screen dimentions, calculate scaling based on width in order to have a window
+         * that is responsive
+         */
+
+        //scale = screenWidth / 800;
+        //fontSize = scale * baseFontSize;
+
+
+        //firstTask = {screenWidth/7, screenHeight/7 + screenHeight/10, std::max(screenWidth/8, (float)100), std::max(screenHeight/16, (float)50)};
+        // Update
+        //----------------------------------------------------------------------------------
+        // TODO: Update your variables here
+        //----------------------------------------------------------------------------------
+
+        // Draw
+        //----------------------------------------------------------------------------------
+        BeginDrawing();
+            ClearBackground(this->backgroundColor);
+            //if(first){
+            //    ClearBackground(this->backgroundColor);
+            //    first = false;
+
+            //    DrawCircle(x,y,30,RED);
+
+            //}
+            //DrawText("SECONDTASK", 30, 30, 300, WHITE);
+            DrawPoints();
+
+            //DrawPixel((int)x, (int)y, WHITE);
+            DrawCircle(bicycle->getX(), bicycle->getY(), 2, WHITE);
+
+            SavePoint(bicycle->getX(), bicycle->getY());
+
+            // GUI controls
+            GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 40, 120, 20}, "Wheelbase", TextFormat("%.2f", wheelbase), &wheelbase, 1, 200);
+            GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 80, 120, 20}, "Velocity", TextFormat("%.2f", velocity), &velocity, 1, 150);
+            GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 120, 120, 20}, "Delta", TextFormat("%.2f", delta), &delta, -0.5, 0.5);
+            GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 160, 120, 20}, "Theta", TextFormat("%.2f", theta), &theta, -10, 10);
+
+            if(error_msg){
+                GuiMessageBox((Rectangle){ 300, 40, 600, 600}, "Crash detected", "Nice, crash box tested\n\n the mechanics love you already.\n\n\n\n You're fired... \n\nLike the battery is burning get out", "Get out");
+            }
+
+
+            //DrawText("this IS a texture!", 360, 370, 18, GRAY);
+
+        EndDrawing();
+
+        float heading = 0;
+        float noise = 0;
+
+        if (this->occupied % 500 == 0){
+            noise = (dist(rng) * 5);
+            bicycle->setDelta(abs(dist(rng) * 7 - 0.5));
+            bicycle->Step(GetFrameTime());
+        }
+        error = heading - (bicycle->getTheta());
+        errory = screenHeight/2 - bicycle->getY();
+
+        bicycle->PStep(GetFrameTime(), pcont->computeDelta(error, errory));
+
+        if (prevDelta != delta || prevTheta != theta || prevVelocity != velocity || prevWheelbase != wheelbase){
+            bicycle->Update(delta, theta, wheelbase, velocity);
+        }
+
+        prevTheta = theta;
+        prevDelta = delta;
+        prevVelocity = velocity;
+        prevWheelbase = wheelbase;
+
+        //bicycle->Step(dt);
+        //----------------------------------------------------------------------------------
+    //}
+
+    return THIRD_TASK;
 }
 
 
