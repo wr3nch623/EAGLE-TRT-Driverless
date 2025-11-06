@@ -15,11 +15,14 @@ enum GameState{
     EXIT
 };
 
+// Array of points that serve for drawing the path taken by the vehicle
 struct Point{
     float x, y;
     int r;
     Color c;
 };
+// Dimention for said points struct. This is not the best because as of now
+// the program will crash if it goes over.
 #define DIM 50000
 
 
@@ -42,9 +45,8 @@ class WindowManager{
         ~WindowManager();
         WindowManager(float, float);
 
-        //void ResetBicycle(float delta, float theta, float wheelbase, float velocity);
-
-        void ResetWindow();
+        
+        void CreateWindow();
         void ResetPoints();
         void DrawPoints();
         void SavePoint(float x, float y);

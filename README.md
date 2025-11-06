@@ -1,5 +1,19 @@
 # **E-Agle Formula Student Driverless Control Task**
 
+The report is in the Report.md file
+
+## Build instruction and execution
+- clone the repository
+```
+mkdir build && cd build
+
+cmake ..
+
+make
+
+./Driverless
+```
+
 ## **Objective**
 The goal of this challenge is to implement a **feedback controller** for a **Formula Student Driverless vehicle**. The candidate will work with **C++ and CMake** to develop a controller that allows the vehicle to follow a trajectory while maintaining stability and minimizing tracking errors.
 
