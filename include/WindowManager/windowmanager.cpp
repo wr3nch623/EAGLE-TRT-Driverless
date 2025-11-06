@@ -522,7 +522,7 @@ GameState WindowManager::ThirdTask(float &prevDelta, float &prevTheta, float &pr
 
     // Checking if the trajectory has exited the screen boundaries. In that case
     // it will create a messagebox showing an error.
-    float delta, theta, velocity, wheel, x, y, dt, wheelbase, screenWidth, screenHeight;
+    float delta, theta, velocity, wheel, x, y, dt, wheelbase, screenWidth, screenHeight, k_p, k_y, prevK_p, prevK_y;
     bool error_msg = false, first = true, mainMenu = false;
     Rectangle mainMenuRectangle = {20, 20, 60, 40};
     Vector2 mousePosition = GetMousePosition();
@@ -542,6 +542,13 @@ GameState WindowManager::ThirdTask(float &prevDelta, float &prevTheta, float &pr
     wheelbase = bicycle->getWheelBase();
     x = bicycle->getX();
     y = bicycle->getY();
+
+    // getting Proportional correction values
+    k_p = pcont->getK_d();
+    k_y = pcont->getK_y();
+
+    prevK_p = k_p;
+    prevK_y = k_y;
 
 
     dt = GetFrameTime();
@@ -587,6 +594,11 @@ GameState WindowManager::ThirdTask(float &prevDelta, float &prevTheta, float &pr
         GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 120, 120, 20}, "Delta", TextFormat("%.2f", delta), &delta, -0.5, 0.5);
         GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 160, 120, 20}, "Theta", TextFormat("%.2f", theta), &theta, -10, 10);
 
+        GuiSliderBar((Rectangle){screenWidth - screenWidth/5, screenHeight - 80, 120, 20}, "k_p", TextFormat("%.2f", k_p), &k_p, 0, 5);
+        GuiSliderBar((Rectangle){screenWidth - screenWidth/5, screenHeight - 40, 120, 20}, "k_y", TextFormat("%.2f", k_y), &k_y, 0, 5);
+
+
+        
         if(CheckCollisionPointRec(mousePosition, mainMenuRectangle)){
             DrawRectangleRec(mainMenuRectangle, RED);
 
@@ -619,6 +631,11 @@ GameState WindowManager::ThirdTask(float &prevDelta, float &prevTheta, float &pr
 
     if (prevDelta != delta || prevTheta != theta || prevVelocity != velocity || prevWheelbase != wheelbase){
         bicycle->Update(delta, theta, wheelbase, velocity);
+    }
+
+    if(prevK_p != k_p || prevK_y != k_y){
+        pcont->setK_d(k_p);
+        pcont->setK_y(k_y);
     }
 
     prevTheta = theta;

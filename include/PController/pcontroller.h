@@ -15,5 +15,8 @@ class PController{
         float computeDelta(float error, float errory) {return (k_d*error) + (k_y*errory);};
 
         float getK_d() {return this->k_d;};
+        float getK_y() {return this->k_y;};
         void setK_d(float k) {this->k_d = k;};
+        void setK_y(float k) {this->k_y = k;};
+        
 };
