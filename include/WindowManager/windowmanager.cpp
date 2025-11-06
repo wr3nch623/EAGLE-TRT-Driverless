@@ -109,8 +109,11 @@ int WindowManager::Run(){
         switch (state)
         {
             case MAIN_MENU:
-                if(this->occupied != 0)
+                if(this->occupied != 0){
                     ResetPoints();
+                    bicycle->setX(GetScreenWidth()/2);
+                    bicycle->setY(GetScreenHeight()/2);
+                }
                 state = MainMenu();
                 break;
 
@@ -296,8 +299,9 @@ void WindowManager::SavePoint(float x, float y){
 GameState WindowManager::FirstTask(float &prevDelta, float &prevTheta, float &prevVelocity, float &prevWheelbase, BicycleController *bicycle){
 
     float delta, theta, velocity, wheel, x, y, dt, wheelbase, screenWidth, screenHeight;
-    bool error_msg = false, first = true;
-
+    bool error_msg = false, first = true, mainMenu = false;
+    Rectangle mainMenuRectangle = {20, 20, 60, 40};
+    Vector2 mousePosition = GetMousePosition();
 
 
     theta = bicycle->getTheta();
@@ -306,6 +310,8 @@ GameState WindowManager::FirstTask(float &prevDelta, float &prevTheta, float &pr
     wheelbase = bicycle->getWheelBase();
     x = bicycle->getX();
     y = bicycle->getY();
+
+
 
 
     dt = GetFrameTime();
@@ -335,6 +341,7 @@ GameState WindowManager::FirstTask(float &prevDelta, float &prevTheta, float &pr
     //fontSize = scale * baseFontSize;
 
 
+
     // Draw
     //----------------------------------------------------------------------------------
     BeginDrawing();
@@ -346,6 +353,8 @@ GameState WindowManager::FirstTask(float &prevDelta, float &prevTheta, float &pr
         DrawCircle(bicycle->getX(), bicycle->getY(), 2, WHITE);
 
         SavePoint(bicycle->getX(), bicycle->getY());
+        DrawRectangleRec(mainMenuRectangle, LIGHTGRAY);
+        DrawText("Back", 25, 25, 18, BLACK);
 
         // GUI controls
         GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 40, 120, 20}, "Wheelbase", TextFormat("%.2f", wheelbase), &wheelbase, 1, 200);
@@ -353,6 +362,14 @@ GameState WindowManager::FirstTask(float &prevDelta, float &prevTheta, float &pr
         GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 120, 120, 20}, "Delta", TextFormat("%.2f", delta /* RAD2DEG */), &delta, -0.5, 0.5);
         GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 160, 120, 20}, "Theta", TextFormat("%.2f", theta), &theta, -10, 10);
 
+        if(CheckCollisionPointRec(mousePosition, mainMenuRectangle)){
+            DrawRectangleRec(mainMenuRectangle, RED);
+
+            if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+                mainMenu = true;
+            }
+
+        }
         
         if(error_msg){
             GuiMessageBox((Rectangle){ 300, 40, 600, 600}, "Crash detected", "Nice, crash box tested\n\n the mechanics love you already.\n\n\n\n You're fired... \n\nLike the battery is burning get out", "Get out");
@@ -374,6 +391,10 @@ GameState WindowManager::FirstTask(float &prevDelta, float &prevTheta, float &pr
 
     bicycle->Step(dt);
 
+    if(mainMenu){
+        return MAIN_MENU;
+    }
+
 
     return FIRST_TASK;
 }
@@ -382,15 +403,19 @@ GameState WindowManager::FirstTask(float &prevDelta, float &prevTheta, float &pr
 GameState WindowManager::SecondTask(float &prevDelta, float &prevTheta, float &prevVelocity, float &prevWheelbase, BicycleController *bicycle, PController *pcont, float &error){
 
     float delta, theta, velocity, wheel, x, y, dt, wheelbase, screenWidth, screenHeight;
-    bool error_msg = false, first = true;
+    bool error_msg = false, first = true, mainMenu = false;
     float heading = 0;
     float noise = 0;
 
+    Rectangle mainMenuRectangle = {20, 20, 60, 40};
+    Vector2 mousePosition = GetMousePosition();
     //Random engine
     std::mt19937 rng(std::random_device{}());
 
     // uniform distribution random values
     std::uniform_real_distribution<double> dist(0.0, 1.0);
+
+
 
     // get all the attributes of the class. These are needed later for the update of all the variables if the slider changes value.
     theta = bicycle->getTheta();
@@ -432,6 +457,8 @@ GameState WindowManager::SecondTask(float &prevDelta, float &prevTheta, float &p
         DrawCircle(bicycle->getX(), bicycle->getY(), 2, WHITE);
 
         SavePoint(bicycle->getX(), bicycle->getY());
+        DrawRectangleRec(mainMenuRectangle, LIGHTGRAY);
+        DrawText("Back", 25, 25, 18, BLACK);
 
         // GUI controls
         GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 40, 120, 20}, "Wheelbase", TextFormat("%.2f", wheelbase), &wheelbase, 1, 200);
@@ -439,7 +466,14 @@ GameState WindowManager::SecondTask(float &prevDelta, float &prevTheta, float &p
         GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 120, 120, 20}, "Delta", TextFormat("%.2f", delta), &delta, -0.5, 0.5);
         GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 160, 120, 20}, "Theta", TextFormat("%.2f", theta), &theta, -10, 10);
 
+        if(CheckCollisionPointRec(mousePosition, mainMenuRectangle)){
+            DrawRectangleRec(mainMenuRectangle, RED);
 
+            if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+                mainMenu = true;
+            }
+
+        }
 
 
     EndDrawing();
@@ -474,6 +508,10 @@ GameState WindowManager::SecondTask(float &prevDelta, float &prevTheta, float &p
     prevVelocity = velocity;
     prevWheelbase = wheelbase;
 
+    if(mainMenu){
+        return MAIN_MENU;
+    }
+
 
     return SECOND_TASK;
 }
@@ -485,7 +523,9 @@ GameState WindowManager::ThirdTask(float &prevDelta, float &prevTheta, float &pr
     // Checking if the trajectory has exited the screen boundaries. In that case
     // it will create a messagebox showing an error.
     float delta, theta, velocity, wheel, x, y, dt, wheelbase, screenWidth, screenHeight;
-    bool error_msg = false, first = true;
+    bool error_msg = false, first = true, mainMenu = false;
+    Rectangle mainMenuRectangle = {20, 20, 60, 40};
+    Vector2 mousePosition = GetMousePosition();
 
     float heading = 0;
     float noise = 0;
@@ -538,12 +578,23 @@ GameState WindowManager::ThirdTask(float &prevDelta, float &prevTheta, float &pr
         DrawCircle(bicycle->getX(), bicycle->getY(), 2, WHITE);
 
         SavePoint(bicycle->getX(), bicycle->getY());
+        DrawRectangleRec(mainMenuRectangle, LIGHTGRAY);
+        DrawText("Back", 25, 25, 18, BLACK);
 
         // GUI controls
         GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 40, 120, 20}, "Wheelbase", TextFormat("%.2f", wheelbase), &wheelbase, 1, 200);
         GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 80, 120, 20}, "Velocity", TextFormat("%.2f", velocity), &velocity, 1, 150);
         GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 120, 120, 20}, "Delta", TextFormat("%.2f", delta), &delta, -0.5, 0.5);
         GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 160, 120, 20}, "Theta", TextFormat("%.2f", theta), &theta, -10, 10);
+
+        if(CheckCollisionPointRec(mousePosition, mainMenuRectangle)){
+            DrawRectangleRec(mainMenuRectangle, RED);
+
+            if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+                mainMenu = true;
+            }
+
+        }
 
         if(error_msg){
             GuiMessageBox((Rectangle){ 300, 40, 600, 600}, "Crash detected", "Nice, crash box tested\n\n the mechanics love you already.\n\n\n\n You're fired... \n\nLike the battery is burning get out", "Get out");
@@ -575,6 +626,10 @@ GameState WindowManager::ThirdTask(float &prevDelta, float &prevTheta, float &pr
     prevVelocity = velocity;
     prevWheelbase = wheelbase;
 
+    if(mainMenu){
+        return MAIN_MENU;
+    }
+
     return THIRD_TASK;
 }
 
@@ -585,7 +640,12 @@ GameState WindowManager::FourthTask(float &prevDelta, float &prevTheta, float &p
     // Checking if the trajectory has exited the screen boundaries. In that case
     // it will create a messagebox showing an error.
     float delta, theta, velocity, wheel, x, y, dt, wheelbase, screenWidth, screenHeight;
-    bool error_msg = false, first = true;
+    bool error_msg = false, first = true, mainMenu = false;
+    Rectangle mainMenuRectangle = {20, 20, 60, 40};
+    Vector2 mousePosition = GetMousePosition();
+
+    float heading = 0;
+    float noise = 0;
 
     //Random engine
     std::mt19937 rng(std::random_device{}());
@@ -639,6 +699,8 @@ GameState WindowManager::FourthTask(float &prevDelta, float &prevTheta, float &p
         DrawCircle(bicycle->getX(), bicycle->getY(), 2, WHITE);
 
         SavePoint(bicycle->getX(), bicycle->getY());
+        DrawRectangleRec(mainMenuRectangle, LIGHTGRAY);
+        DrawText("Back", 25, 25, 18, BLACK);
 
         // GUI controls
         GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 40, 120, 20}, "Wheelbase", TextFormat("%.2f", wheelbase), &wheelbase, 1, 200);
@@ -646,17 +708,24 @@ GameState WindowManager::FourthTask(float &prevDelta, float &prevTheta, float &p
         GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 120, 120, 20}, "Delta", TextFormat("%.2f", delta), &delta, -1, 1);
         GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 160, 120, 20}, "Theta", TextFormat("%.2f", theta), &theta, -10, 10);
 
+        if(CheckCollisionPointRec(mousePosition, mainMenuRectangle)){
+            DrawRectangleRec(mainMenuRectangle, RED);
+
+            if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+                mainMenu = true;
+            }
+
+        }
+
         if(error_msg){
             GuiMessageBox((Rectangle){ 300, 40, 600, 600}, "Crash detected", "Nice, crash box tested\n\n the mechanics love you already.\n\n\n\n You're fired... \n\nLike the battery is burning get out", "Get out");
         }
 
 
-        //DrawText("this IS a texture!", 360, 370, 18, GRAY);
 
     EndDrawing();
 
-    float heading = 0;
-    float noise = 0;
+
 
     if (this->occupied % 500 == 0){
         noise = (dist(rng) * 5);
@@ -677,6 +746,10 @@ GameState WindowManager::FourthTask(float &prevDelta, float &prevTheta, float &p
     prevDelta = delta;
     prevVelocity = velocity;
     prevWheelbase = wheelbase;
+
+    if(mainMenu){
+        return MAIN_MENU;
+    }
 
 
     return FOURTH_TASK;

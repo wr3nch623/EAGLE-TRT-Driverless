@@ -7,6 +7,10 @@ For all of the tasks basically the same template was used, it is not the best th
 
 This resource proved useful to help understanding and develop [the bicycle model](https://thomasfermi.github.io/Algorithms-for-Automated-Driving/Control/BicycleModel.html) and also PID for a brief reminder.
 
+The P and PID controller were tuned by doing some test changing the values inside the definition of the class. 
+
+If there are questions feel free to ask.
+
 # Encountered problems
 I had some problems regarding raylib on how to design the cycle. This caused me to rewrite most of the tasks because first i did not finish the design of the main menu, causing to always having to instantiate the window in every function. This worked until i had to integrate the menu creating an headache that lasted a day in order to make it work properly, leading to the state driven menu I have right now. 
 
@@ -19,7 +23,9 @@ As of now the code is not yet ready to be considered done. There is still some p
 Thanks for reviewing this code, and having to see some things that i also don't like, like the passing by reference of the previous values that could be instanced inside every function, and my beautiful code that still needs work, especially for the graphics rendering. If i pass the requirements, i would like to start as soon as i'm back in Trento (the 16th), since i should have completed most of the work i am still required to do. We can also discuss about this.
 
 # TODO
-- add buttons to get back to the main menu everywhere
+- ~add buttons to get back to the main menu everywhere~
+- add slider to tune pid controller
+- test code for memory leaks
 - polish the code in order to strip it down to the bare minimum where it should work without having useless variables.
 - implement more complex paths with the definition of a custom track.
 - do fifth task
