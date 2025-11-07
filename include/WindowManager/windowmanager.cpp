@@ -407,7 +407,7 @@ GameState WindowManager::FirstTask(BicycleController *bicycle){
         }
         
         if(error_msg){
-            GuiMessageBox((Rectangle){ 300, 40, 600, 600}, "Crash detected", "Nice, crash box tested\n\n the mechanics love you already.\n\n\n\n You're fired... \n\nLike the battery is burning get out", "Get out");
+            GuiMessageBox((Rectangle){ 300, 40, 600, 600}, "Crash detected", "Nice, crash box tested\n\n the mechanics love you already.\n\n\n\n The button is not yet implemented, \n\nso you got to restart \n\nthe whole program.", "Get out");
         }
 
 

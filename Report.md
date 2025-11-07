@@ -39,9 +39,10 @@ As of now the code is better than yesterday, so its something. There is still so
 
 # TODO
 - ~add buttons to get back to the main menu everywhere~
-- add slider to tune pid controller
-- test code for memory leaks
-- polish the code in order to strip it down to the bare minimum where it should work without having useless variables.
+- ~add slider to tune pid controller~
+- ~test code for memory leaks~
+- Fix memory leaks
+- Finish polishing the code, is decent but could be better
 - implement more complex paths with the definition of a custom track.
 - ~do fifth task~
 - add some other todos that i cannot think about now.
