@@ -48,6 +48,7 @@ WindowManager::WindowManager(){
 WindowManager::~WindowManager(){
     //return;
     CloseWindow();
+
 }
 /* 
     Creates the RayLib window, sets the default fontsize and target fps. In origin it was planned to
@@ -89,7 +90,6 @@ int WindowManager::Run(){
     const float baseFontSize = 32;
     //remove this
     bool first = true, error_msg = false, firstTaskBool = false;
-    //remove this
     float x = screenWidth/2, y = screenHeight/2, delta = 0.6, theta = 0.6, velocity = 30, wheelbase = 50, error = 0, errory = 0;
     // remove this
     float prevDelta = delta, prevTheta = theta, prevVelocity = velocity, prevWheelbase = wheelbase;
@@ -160,6 +160,8 @@ int WindowManager::Run(){
             }
     
     }
+
+    delete pcont; delete pidcont; delete scont; delete pcontHeadDir; delete bicycle;
 
     return 0;
 }
@@ -337,8 +339,8 @@ void WindowManager::SavePoint(float x, float y){
 
 GameState WindowManager::FirstTask(BicycleController *bicycle){
 
-    float delta, theta, velocity, wheel, x, y, dt, wheelbase;
-    float prevTheta, prevDelta, prevWheelbase, prevVelocity;
+    float delta = 0, theta = 0, velocity = 0, wheel = 0, x = 0, y = 0, dt = 0, wheelbase = 0;
+    float prevTheta = 0, prevDelta = 0, prevWheelbase = 0, prevVelocity = 0;
     bool error_msg = false, mainMenu = false;
     Rectangle mainMenuRectangle = {20, 20, 60, 40};
     Vector2 mousePosition = GetMousePosition();
