@@ -41,7 +41,17 @@ As of now the code is better than yesterday, so its something. There is still so
 - ~add buttons to get back to the main menu everywhere~
 - ~add slider to tune pid controller~
 - ~test code for memory leaks~
-- Fix memory leaks
+- ~Fix memory leaks~
+- See if still reachable leaks are a problem
+
+==7345== LEAK SUMMARY:
+==7345==    definitely lost: 0 bytes in 0 blocks
+==7345==    indirectly lost: 0 bytes in 0 blocks
+==7345==      possibly lost: 0 bytes in 0 blocks
+==7345==    still reachable: 242,871 bytes in 3,319 blocks
+==7345==         suppressed: 0 bytes in 0 blocks
+
+
 - Finish polishing the code, is decent but could be better
 - implement more complex paths with the definition of a custom track.
 - ~do fifth task~
