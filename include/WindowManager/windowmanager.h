@@ -3,6 +3,7 @@
 #include "../BicycleController/bicyclecontroller.h"  // for BicycleController
 //#include "../PController/pcontroller.h"
 #include "../PIDController/pidcontroller.h"
+#include "../StanleyController/stanleycontroller.h"
 
 
 enum GameState{
@@ -35,6 +36,9 @@ class WindowManager{
         const Color backgroundColor = {69, 6, 147, 100};
         Point points[DIM];
         int occupied;
+        //float dt;
+
+        void DrawVehicleSliders(float &wheelbase, float &velocity, float &delta, float &theta);
 
 
 
@@ -53,9 +57,12 @@ class WindowManager{
 
         int Run();
         GameState MainMenu();
-        GameState FirstTask(float &prevDelta, float &prevTheta, float &prevVelocity, float &prevWheelbase, BicycleController *bicycle);
-        GameState SecondTask(float &prevDelta, float &prevTheta, float &prevVelocity, float &prevWheelbase, BicycleController *bicycle, PController *pcont, float &error);
-        GameState ThirdTask(float &prevDelta, float &prevTheta, float &prevVelocity, float &prevWheelbase, BicycleController *bicycle, PController *pcont, float &error, float &errory);
-        GameState FourthTask(float &prevDelta, float &prevTheta, float &prevVelocity, float &prevWheelbase, BicycleController *bicycle, PIDController *pcont, float &error, float &errory);
+        GameState FirstTask(BicycleController *bicycle);
+        GameState SecondTask(BicycleController *bicycle, PController *pcont, float &error);
+        GameState ThirdTask(BicycleController *bicycle, PController *pcont, float &error, float &errory);
+        GameState FourthTask(BicycleController *bicycle, PIDController *pcont, float &error, float &errory);
+        GameState FifthTask(BicycleController *bicycle, StanleyController *pcont, float &error, float &errory);
+
+
 
     };

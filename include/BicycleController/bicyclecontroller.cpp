@@ -7,10 +7,20 @@ BicycleController::BicycleController(float x, float y, float delta, float theta,
 
 void BicycleController::Step(float frametime){
 
+
     this->x = this->x + (this->velocity * cos(this->theta)) * (frametime);
     this->y = this->y + (this->velocity * sin(this->theta)) * (frametime);
-    this->theta = this->theta + ((this->velocity/this->l) * tan(this->delta)) * (frametime);
+    this->theta = theta + ((this->velocity/this->l) * tan(this->delta)) * (frametime);
 
+
+    // keep theta in check, cause otherwise it will update up to infinity 
+    // messing with the controls.
+    if(this->theta > M_PI){
+        this->theta -= 2 * M_PI;
+    }
+    if(this->theta < -M_PI){
+        this->theta += 2 * M_PI;
+    }
 }
 
 void BicycleController::Update(float delta, float theta, float wheelbase, float velocity){

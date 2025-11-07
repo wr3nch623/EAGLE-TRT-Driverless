@@ -16,6 +16,7 @@ class BicycleController{
         float getWheelBase() {return this->l;};
         float getVelocity() {return this->velocity;};
 
+        // Setters declaration
         void setX(float x) {this->x=x;};
         void setY(float y) {this->y=y;};
         void setTheta(float theta) {this->theta = theta;};

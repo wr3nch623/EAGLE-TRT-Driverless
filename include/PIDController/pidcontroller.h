@@ -3,12 +3,13 @@
 #include <limits>
 
 class PIDController : public PController{
+
     private:
-        float k_i;
-        float k_d;
-        float int_term;
-        float derivative_term;
-        float last_error;
+        float k_i; // integral gain 
+        float k_d; // derivative gain
+        float int_term; // accumulated integral term
+        float derivative_term; // accumulated derivative term
+        float last_error; // last error used for derivative computation
     
     public:
         // Constructor of PID that inherits from proportional controller. 
@@ -27,4 +28,24 @@ class PIDController : public PController{
             // returns the three components added to make it work. Proportional part is computed by the superclass.
             return PController::computeDelta(error, errory) + this->int_term + this->derivative_term; 
         }
+
+        // Updates all values when a slider changes value
+        void Update(float k_p, float k_y, float k_i, float k_d){
+            PController::setK_p(k_p);
+            PController::setK_y(k_y);
+            this->k_i = k_i;
+            this->k_d = k_d;
+        }
+
+        // Getter and setter declarations
+        float getK_p() {return PController::getK_p();};
+        float getK_y() {return PController::getK_y();};
+        float getK_i() {return this->k_i;};
+        float getK_d() {return this->k_d;};
+
+        void setK_p(float k) {PController::setK_p(k);};
+        void setK_y(float k) {PController::setK_y(k);};
+        void setK_i(float k) {this->k_i = k;};
+        void setK_d(float k) {this->k_d = k;};
+
 };

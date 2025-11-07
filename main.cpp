@@ -13,8 +13,7 @@
 using namespace std;
 
 int main(){
-    //WindowManager *window = new WindowManager();
-	float windowWidth = 1280, windowHeight = 650;
+	float windowWidth = 1680, windowHeight = 1050;
 	WindowManager* window = new WindowManager(windowWidth, windowHeight);
 	window->Run();
 

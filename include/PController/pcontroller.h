@@ -1,7 +1,7 @@
 class PController{
     private:
-        float k_d;
-        float k_y;
+        float k_d; // This is the proportional gain for heading correction (steering control)
+        float k_y; // This is the proportional gain for lateral drift correction (y axis)
 
     public:
         // Constructors
@@ -14,9 +14,10 @@ class PController{
         float computeDelta(float error) {return (k_d*error);};
         float computeDelta(float error, float errory) {return (k_d*error) + (k_y*errory);};
 
-        float getK_d() {return this->k_d;};
+        // Getter and setter declarations
+        float getK_p() {return this->k_d;};
         float getK_y() {return this->k_y;};
-        void setK_d(float k) {this->k_d = k;};
+        void setK_p(float k) {this->k_d = k;};
         void setK_y(float k) {this->k_y = k;};
         
 };

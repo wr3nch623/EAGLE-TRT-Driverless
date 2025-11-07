@@ -84,16 +84,21 @@ void WindowManager::ResetPoints(){
 int WindowManager::Run(){
     GameState state = MAIN_MENU;
     
+    //remove everything i believe
     float screenWidth = 1680, screenHeight = 1050, scale = 0, fontSize = 0, dt = 0;
     const float baseFontSize = 32;
+    //remove this
     bool first = true, error_msg = false, firstTaskBool = false;
+    //remove this
     float x = screenWidth/2, y = screenHeight/2, delta = 0.6, theta = 0.6, velocity = 30, wheelbase = 50, error = 0, errory = 0;
+    // remove this
     float prevDelta = delta, prevTheta = theta, prevVelocity = velocity, prevWheelbase = wheelbase;
 
     BicycleController *bicycle = new BicycleController(GetScreenWidth()/2, GetScreenHeight()/2, delta, theta, wheelbase, velocity);
     PController *pcont = new PController(2.5f); 
     PController *pcontHeadDir = new PController(2.5f, 0.1f); 
     PIDController *pidcont = new PIDController(1.8f, 0.1f, 0.7f, 1.0f);
+    StanleyController *scont = new StanleyController(1.8f);
 
     Color backgroundColor = {69, 6, 147, 100};
 
@@ -106,32 +111,47 @@ int WindowManager::Run(){
 
             TODO: close the window using also a button somewhere.
         */
+
+        // Updating window dimentions cause resizable window will come in the future
+        this->windowWidth = GetScreenWidth();
+        this->windowHeight = GetScreenHeight();
+
+        // state based window. This decides which screen to show based on user actions.
         switch (state)
         {
             case MAIN_MENU:
+                // Variable reset
                 if(this->occupied != 0){
                     ResetPoints();
-                    bicycle->setX(GetScreenWidth()/2);
-                    bicycle->setY(GetScreenHeight()/2);
+                    bicycle->setX(this->windowWidth/2);
+                    bicycle->setY(this->windowHeight/2);
+                    bicycle->Update(delta, theta, wheelbase, velocity);
+                    error = 0;
+                    errory = 0;
                 }
                 state = MainMenu();
                 break;
 
             case FIRST_TASK:
-                state = FirstTask(prevDelta, prevTheta, prevVelocity, prevWheelbase, bicycle);
+                state = FirstTask(bicycle);
                 break;
 
             case SECOND_TASK:
-                state = SecondTask(prevDelta, prevTheta, prevVelocity, prevWheelbase, bicycle, pcont, error);
+                state = SecondTask(bicycle, pcont, error);
                 break;
 
             case THIRD_TASK:
-                state = ThirdTask(prevDelta, prevTheta, prevVelocity, prevWheelbase, bicycle, pcontHeadDir, error, errory);
+                state = ThirdTask(bicycle, pcontHeadDir, error, errory);
                 break;
 
             case FOURTH_TASK:
-                state = FourthTask(prevDelta, prevTheta, prevVelocity, prevWheelbase, bicycle, pidcont, error, errory);
+                state = FourthTask(bicycle, pidcont, error, errory);
                 break;
+
+            case FIFTH_TASK:
+                state = FifthTask(bicycle, scont, error, errory);
+                break;
+            
             
             default:
                 std::cout << "You should not be here." << std::endl;
@@ -148,25 +168,26 @@ int WindowManager::Run(){
 GameState WindowManager::MainMenu(){
     // Declaring scale and fontSize variable. The fontsize variable is computed based on scale
     // because the window was supposed to be dinamically resizable.
-    float scale = 0, fontSize = 0, frameTime = 0;
-    bool firstTaskBool = false, secondTaskBool = false, thirdTaskBool = false, fourthTaskBool = false;
+    float scale = 0, fontSize = 0;
+    //frameTime = 0;
+    bool firstTaskBool = false, secondTaskBool = false, thirdTaskBool = false, fourthTaskBool = false, fifthTaskBool = false;
 
     Color backgroundColor = {69, 6, 147, 100};
     Rectangle firstTask = {this->windowWidth/7, this->windowHeight/6+50, 100, 50}, 
               secondTask = {this->windowWidth/7, this->windowHeight/6+100, 100, 50},
               thirdTask = {this->windowWidth/7, this->windowHeight/6+100, 100, 50},
-              fourthTask = {this->windowWidth/7, this->windowHeight/6+100, 100, 50};
+              fourthTask = {this->windowWidth/7, this->windowHeight/6+100, 100, 50},
+              fifthTask = {this->windowWidth/7, this->windowHeight/6+100, 100, 50};;
 
     Vector2 mousePosition;
 
 
-    frameTime = GetFrameTime();
+    //frameTime = GetFrameTime();
 
     /* Getting current screen dimentions, calculate scaling based on width in order to have a window
         * that is responsive
         */
-    this->windowWidth = GetScreenWidth();
-    this->windowHeight = GetScreenHeight();
+
     scale = this->windowWidth / 800;
     fontSize = scale * this->baseFontSize;
 
@@ -180,6 +201,8 @@ GameState WindowManager::MainMenu(){
                 std::max(this->windowWidth/8, (float)100), std::max(this->windowHeight/16, (float)50)};
 
     fourthTask = {this->windowWidth/7, this->windowHeight/7 + this->windowHeight/10 + this->windowHeight/16 + 250, 
+                std::max(this->windowWidth/8, (float)100), std::max(this->windowHeight/16, (float)50)};
+    fifthTask = {this->windowWidth/7, this->windowHeight/7 + this->windowHeight/10 + this->windowHeight/16 + 350, 
                 std::max(this->windowWidth/8, (float)100), std::max(this->windowHeight/16, (float)50)};
 
 
@@ -204,6 +227,10 @@ GameState WindowManager::MainMenu(){
 
         DrawRectangleRec(fourthTask, LIGHTGRAY);
         DrawText("Fourth task", this->windowWidth/7 + 20, this->windowHeight/7 + this->windowHeight/10 + this->windowHeight/16 + 280, 20, BLACK);
+
+        DrawRectangleRec(fifthTask, LIGHTGRAY);
+        DrawText("Fifth task", this->windowWidth/7 + 20, this->windowHeight/7 + this->windowHeight/10 + this->windowHeight/16 + 380, 20, BLACK);
+
 
         // Checking collisions with boxes and the mouse. If mouse is hovering changes color to red, and if there
         // is a click it changes the boolean responsible for changing the task. 
@@ -239,7 +266,15 @@ GameState WindowManager::MainMenu(){
             }
 
         }
-    
+        
+        if(CheckCollisionPointRec(mousePosition, fifthTask)){
+            DrawRectangleRec(fifthTask, RED);
+
+            if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+                fifthTaskBool = true;
+            }
+
+        }
 
     EndDrawing();
     //----------------------------------------------------------------------------------
@@ -261,6 +296,10 @@ GameState WindowManager::MainMenu(){
         return FOURTH_TASK;
     }
 
+    if(fifthTaskBool){
+        return FIFTH_TASK;
+    }
+
 
 	return MAIN_MENU;
 }
@@ -273,7 +312,7 @@ void WindowManager::DrawPoints(){
 
     }
 }
-// Function that saves the points of 
+// Function that saves the points that draw the path of the vehicle
 void WindowManager::SavePoint(float x, float y){
 
     /*
@@ -296,10 +335,11 @@ void WindowManager::SavePoint(float x, float y){
 }
 
 
-GameState WindowManager::FirstTask(float &prevDelta, float &prevTheta, float &prevVelocity, float &prevWheelbase, BicycleController *bicycle){
+GameState WindowManager::FirstTask(BicycleController *bicycle){
 
-    float delta, theta, velocity, wheel, x, y, dt, wheelbase, screenWidth, screenHeight;
-    bool error_msg = false, first = true, mainMenu = false;
+    float delta, theta, velocity, wheel, x, y, dt, wheelbase;
+    float prevTheta, prevDelta, prevWheelbase, prevVelocity;
+    bool error_msg = false, mainMenu = false;
     Rectangle mainMenuRectangle = {20, 20, 60, 40};
     Vector2 mousePosition = GetMousePosition();
 
@@ -311,32 +351,29 @@ GameState WindowManager::FirstTask(float &prevDelta, float &prevTheta, float &pr
     x = bicycle->getX();
     y = bicycle->getY();
 
-
-
+    prevTheta = theta;
+    prevDelta = delta;
+    prevVelocity = velocity;
+    prevWheelbase = wheelbase;
 
     dt = GetFrameTime();
-
 
     // Checking if the trajectory has exited the screen boundaries. In that case
     // it will create a messagebox showing an error.
 
-    if (x < 0 || x > GetScreenWidth()){
+    if (x < 0 || x > this->windowWidth){
         error_msg = true;
     }
 
-    if (y < 0 || y > GetScreenHeight()){
+    if (y < 0 || y > this->windowHeight){
         error_msg = true;
     }
     
-
-    
-
-
     /* Getting current screen dimentions, calculate scaling based on width in order to have a window
         * that is responsive
         */
-    screenWidth = GetScreenWidth();
-    screenHeight = GetScreenHeight();
+    //screenWidth = GetScreenWidth();
+    //screenHeight = GetScreenHeight();
     //scale = screenWidth / 800;
     //fontSize = scale * baseFontSize;
 
@@ -357,11 +394,9 @@ GameState WindowManager::FirstTask(float &prevDelta, float &prevTheta, float &pr
         DrawText("Back", 25, 25, 18, BLACK);
 
         // GUI controls
-        GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 40, 120, 20}, "Wheelbase", TextFormat("%.2f", wheelbase), &wheelbase, 1, 200);
-        GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 80, 120, 20}, "Velocity", TextFormat("%.2f", velocity), &velocity, 1, 150);
-        GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 120, 120, 20}, "Delta", TextFormat("%.2f", delta /* RAD2DEG */), &delta, -0.5, 0.5);
-        GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 160, 120, 20}, "Theta", TextFormat("%.2f", theta), &theta, -10, 10);
+        DrawVehicleSliders(wheelbase, velocity, delta, theta);
 
+        // Collision check for back button
         if(CheckCollisionPointRec(mousePosition, mainMenuRectangle)){
             DrawRectangleRec(mainMenuRectangle, RED);
 
@@ -399,11 +434,20 @@ GameState WindowManager::FirstTask(float &prevDelta, float &prevTheta, float &pr
     return FIRST_TASK;
 }
 
-// This beautiful task was not working, while before it was... Why? idk, i just spent too much time on this i must move on.
-GameState WindowManager::SecondTask(float &prevDelta, float &prevTheta, float &prevVelocity, float &prevWheelbase, BicycleController *bicycle, PController *pcont, float &error){
+void WindowManager::DrawVehicleSliders(float &wheelbase, float &velocity, float &delta, float &theta){
+    GuiSliderBar((Rectangle){this->windowWidth - this->windowWidth/5, 40, 120, 20}, "Wheelbase", TextFormat("%.2f", wheelbase), &wheelbase, 1, 200);
+    GuiSliderBar((Rectangle){this->windowWidth - this->windowWidth/5, 80, 120, 20}, "Velocity", TextFormat("%.2f", velocity), &velocity, 1, 150);
+    GuiSliderBar((Rectangle){this->windowWidth - this->windowWidth/5, 120, 120, 20}, "Delta", TextFormat("%.2f", delta), &delta, -30, 30);
+    GuiSliderBar((Rectangle){this->windowWidth - this->windowWidth/5, 160, 120, 20}, "Theta", TextFormat("%.2f", theta), &theta, -3.14, 3.14);
+}
 
-    float delta, theta, velocity, wheel, x, y, dt, wheelbase, screenWidth, screenHeight;
-    bool error_msg = false, first = true, mainMenu = false;
+// This beautiful task was not working, while before it was... Why? idk, i just spent too much time on this i must move on.
+GameState WindowManager::SecondTask(BicycleController *bicycle, PController *pcont, float &error){
+
+    float delta, theta, velocity, wheel, x, y, dt, wheelbase;
+    bool error_msg = false, mainMenu = false;
+    float prevTheta, prevDelta, prevWheelbase, prevVelocity;
+
     float heading = 0;
     float noise = 0;
 
@@ -426,12 +470,16 @@ GameState WindowManager::SecondTask(float &prevDelta, float &prevTheta, float &p
     y = bicycle->getY();
 
 
+    prevTheta = theta;
+    prevDelta = delta;
+    prevVelocity = velocity;
+    prevWheelbase = wheelbase;
+
+
     dt = GetFrameTime();
 
 
-    screenWidth = GetScreenWidth();
-    screenHeight = GetScreenHeight();
-    if (x > screenWidth){
+    if (x > this->windowWidth){
         x = 0;
         bicycle->setX(0);
     }
@@ -461,10 +509,7 @@ GameState WindowManager::SecondTask(float &prevDelta, float &prevTheta, float &p
         DrawText("Back", 25, 25, 18, BLACK);
 
         // GUI controls
-        GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 40, 120, 20}, "Wheelbase", TextFormat("%.2f", wheelbase), &wheelbase, 1, 200);
-        GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 80, 120, 20}, "Velocity", TextFormat("%.2f", velocity), &velocity, 1, 150);
-        GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 120, 120, 20}, "Delta", TextFormat("%.2f", delta), &delta, -0.5, 0.5);
-        GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 160, 120, 20}, "Theta", TextFormat("%.2f", theta), &theta, -10, 10);
+        DrawVehicleSliders(wheelbase, velocity, delta, theta);
 
         if(CheckCollisionPointRec(mousePosition, mainMenuRectangle)){
             DrawRectangleRec(mainMenuRectangle, RED);
@@ -518,12 +563,14 @@ GameState WindowManager::SecondTask(float &prevDelta, float &prevTheta, float &p
 
 // NOTE: this code is based on the one for the second task, so its very similar. In essence
 // the only change is in the pstep function that also accounts for keeping the trajectory. In this case keep the middle line
-GameState WindowManager::ThirdTask(float &prevDelta, float &prevTheta, float &prevVelocity, float &prevWheelbase, BicycleController *bicycle, PController *pcont, float &error, float &errory){
+GameState WindowManager::ThirdTask(BicycleController *bicycle, PController *pcont, float &error, float &errory){
 
     // Checking if the trajectory has exited the screen boundaries. In that case
     // it will create a messagebox showing an error.
-    float delta, theta, velocity, wheel, x, y, dt, wheelbase, screenWidth, screenHeight, k_p, k_y, prevK_p, prevK_y;
+    float delta, theta, velocity, wheel, x, y, dt, wheelbase, k_p, k_y, prevK_p, prevK_y;
     bool error_msg = false, first = true, mainMenu = false;
+    float prevTheta, prevDelta, prevWheelbase, prevVelocity;
+   
     Rectangle mainMenuRectangle = {20, 20, 60, 40};
     Vector2 mousePosition = GetMousePosition();
 
@@ -543,8 +590,14 @@ GameState WindowManager::ThirdTask(float &prevDelta, float &prevTheta, float &pr
     x = bicycle->getX();
     y = bicycle->getY();
 
+    prevTheta = theta;
+    prevDelta = delta;
+    prevVelocity = velocity;
+    prevWheelbase = wheelbase;
+
+
     // getting Proportional correction values
-    k_p = pcont->getK_d();
+    k_p = pcont->getK_p();
     k_y = pcont->getK_y();
 
     prevK_p = k_p;
@@ -554,9 +607,9 @@ GameState WindowManager::ThirdTask(float &prevDelta, float &prevTheta, float &pr
     dt = GetFrameTime();
 
 
-    screenWidth = GetScreenWidth();
-    screenHeight = GetScreenHeight();
-    if (x > screenWidth){
+    //screenWidth = GetScreenWidth();
+    //screenHeight = GetScreenHeight();
+    if (x > this->windowWidth){
         x = 0;
         bicycle->setX(0);
     }
@@ -589,13 +642,10 @@ GameState WindowManager::ThirdTask(float &prevDelta, float &prevTheta, float &pr
         DrawText("Back", 25, 25, 18, BLACK);
 
         // GUI controls
-        GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 40, 120, 20}, "Wheelbase", TextFormat("%.2f", wheelbase), &wheelbase, 1, 200);
-        GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 80, 120, 20}, "Velocity", TextFormat("%.2f", velocity), &velocity, 1, 150);
-        GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 120, 120, 20}, "Delta", TextFormat("%.2f", delta), &delta, -0.5, 0.5);
-        GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 160, 120, 20}, "Theta", TextFormat("%.2f", theta), &theta, -10, 10);
+        DrawVehicleSliders(wheelbase, velocity, delta, theta);
 
-        GuiSliderBar((Rectangle){screenWidth - screenWidth/5, screenHeight - 80, 120, 20}, "k_p", TextFormat("%.2f", k_p), &k_p, 0, 5);
-        GuiSliderBar((Rectangle){screenWidth - screenWidth/5, screenHeight - 40, 120, 20}, "k_y", TextFormat("%.2f", k_y), &k_y, 0, 5);
+        GuiSliderBar((Rectangle){this->windowWidth - this->windowWidth/5, this->windowHeight - 80, 120, 20}, "k_p", TextFormat("%.2f", k_p), &k_p, 0, 5);
+        GuiSliderBar((Rectangle){this->windowWidth - this->windowWidth/5, this->windowHeight - 40, 120, 20}, "k_y", TextFormat("%.2f", k_y), &k_y, 0, 5);
 
 
         
@@ -608,11 +658,6 @@ GameState WindowManager::ThirdTask(float &prevDelta, float &prevTheta, float &pr
 
         }
 
-        if(error_msg){
-            GuiMessageBox((Rectangle){ 300, 40, 600, 600}, "Crash detected", "Nice, crash box tested\n\n the mechanics love you already.\n\n\n\n You're fired... \n\nLike the battery is burning get out", "Get out");
-        }
-
-
 
     EndDrawing();
 
@@ -624,7 +669,7 @@ GameState WindowManager::ThirdTask(float &prevDelta, float &prevTheta, float &pr
     }
     // Error computation keeping the middle line.
     error = heading - (bicycle->getTheta());
-    errory = screenHeight/2 - bicycle->getY();
+    errory = this->windowHeight/2 - bicycle->getY();
 
 
     bicycle->PStep(GetFrameTime(), pcont->computeDelta(error, errory));
@@ -634,7 +679,7 @@ GameState WindowManager::ThirdTask(float &prevDelta, float &prevTheta, float &pr
     }
 
     if(prevK_p != k_p || prevK_y != k_y){
-        pcont->setK_d(k_p);
+        pcont->setK_p(k_p);
         pcont->setK_y(k_y);
     }
 
@@ -652,11 +697,15 @@ GameState WindowManager::ThirdTask(float &prevDelta, float &prevTheta, float &pr
 
 // NOTE: Code similar to third task, with the difference that here the correction is done by a PID controller, the rest is
 // basically the same.
-GameState WindowManager::FourthTask(float &prevDelta, float &prevTheta, float &prevVelocity, float &prevWheelbase, BicycleController *bicycle, PIDController *pcont, float &error, float &errory){
+GameState WindowManager::FourthTask(BicycleController *bicycle, PIDController *pcont, float &error, float &errory){
 
     // Checking if the trajectory has exited the screen boundaries. In that case
     // it will create a messagebox showing an error.
-    float delta, theta, velocity, wheel, x, y, dt, wheelbase, screenWidth, screenHeight;
+    float delta, theta, velocity, wheel, x, y, dt, wheelbase;
+    float prevTheta, prevDelta, prevWheelbase, prevVelocity;
+    float k_p, k_y, k_i, k_d;
+    float prevK_p, prevK_y, prevK_i, prevK_d;
+
     bool error_msg = false, first = true, mainMenu = false;
     Rectangle mainMenuRectangle = {20, 20, 60, 40};
     Vector2 mousePosition = GetMousePosition();
@@ -677,13 +726,24 @@ GameState WindowManager::FourthTask(float &prevDelta, float &prevTheta, float &p
     x = bicycle->getX();
     y = bicycle->getY();
 
+    prevTheta = theta;
+    prevDelta = delta;
+    prevVelocity = velocity;
+    prevWheelbase = wheelbase;
+
+    k_p = pcont->getK_p();
+    k_y = pcont->getK_y();
+    k_i = pcont->getK_i();
+    k_d = pcont->getK_d();
+
+    prevK_p = k_p;
+    prevK_y = k_y;
+    prevK_i = k_i;
+    prevK_d = k_d;
 
     dt = GetFrameTime();
 
-
-    screenWidth = GetScreenWidth();
-    screenHeight = GetScreenHeight();
-    if (x > screenWidth){
+    if (x > this->windowWidth){
         x = 0;
         bicycle->setX(0);
     }
@@ -705,8 +765,9 @@ GameState WindowManager::FourthTask(float &prevDelta, float &prevTheta, float &p
     BeginDrawing();
         ClearBackground(this->backgroundColor);
 
-        for (int f = 0; f < windowWidth; f++){
-            DrawCircle(f, windowHeight/2, 2, RED);
+        for (float f = 0; f < this->windowWidth; f+=0.1){
+            //DrawCircle(f, windowHeight/2, 2, RED);
+            DrawCircle(f, this->windowHeight/2 + (sin(f / 100) * 50), 2, RED);
         }
 
 
@@ -720,10 +781,15 @@ GameState WindowManager::FourthTask(float &prevDelta, float &prevTheta, float &p
         DrawText("Back", 25, 25, 18, BLACK);
 
         // GUI controls
-        GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 40, 120, 20}, "Wheelbase", TextFormat("%.2f", wheelbase), &wheelbase, 1, 200);
-        GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 80, 120, 20}, "Velocity", TextFormat("%.2f", velocity), &velocity, 1, 150);
-        GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 120, 120, 20}, "Delta", TextFormat("%.2f", delta), &delta, -1, 1);
-        GuiSliderBar((Rectangle){screenWidth - screenWidth/5, 160, 120, 20}, "Theta", TextFormat("%.2f", theta), &theta, -10, 10);
+        DrawVehicleSliders(wheelbase, velocity, delta, theta);
+
+        // P sliders
+        GuiSliderBar((Rectangle){this->windowWidth - this->windowWidth/5, this->windowHeight - 160, 120, 20}, "k_p", TextFormat("%.2f", k_p), &k_p, 0, 5);
+        GuiSliderBar((Rectangle){this->windowWidth - this->windowWidth/5, this->windowHeight - 120, 120, 20}, "k_y", TextFormat("%.2f", k_y), &k_y, 0, 5);
+        // ID sliders
+        GuiSliderBar((Rectangle){this->windowWidth - this->windowWidth/5, this->windowHeight - 80, 120, 20}, "k_i", TextFormat("%.2f", k_i), &k_i, 0, 5);
+        GuiSliderBar((Rectangle){this->windowWidth - this->windowWidth/5, this->windowHeight - 40, 120, 20}, "k_d", TextFormat("%.2f", k_d), &k_d, 0, 5);
+
 
         if(CheckCollisionPointRec(mousePosition, mainMenuRectangle)){
             DrawRectangleRec(mainMenuRectangle, RED);
@@ -734,11 +800,6 @@ GameState WindowManager::FourthTask(float &prevDelta, float &prevTheta, float &p
 
         }
 
-        if(error_msg){
-            GuiMessageBox((Rectangle){ 300, 40, 600, 600}, "Crash detected", "Nice, crash box tested\n\n the mechanics love you already.\n\n\n\n You're fired... \n\nLike the battery is burning get out", "Get out");
-        }
-
-
 
     EndDrawing();
 
@@ -747,16 +808,23 @@ GameState WindowManager::FourthTask(float &prevDelta, float &prevTheta, float &p
     if (this->occupied % 500 == 0){
         noise = (dist(rng) * 5);
         bicycle->setDelta(abs(dist(rng) * 7 - 0.5));
-        bicycle->Step(GetFrameTime());
+        bicycle->Step(dt);
     }
     // compute the error, calls pcont that here is the PIDController and correct for it.
-    error = heading - (bicycle->getTheta());
-    errory = screenHeight/2 - bicycle->getY();
+    //error = heading - (bicycle->getTheta());
+    error = atan((100.0f / 30.0f) * cos(bicycle->getX() / 30.0f)) - bicycle->getTheta();
+    //errory = screenHeight/2 - bicycle->getY();
+    errory = this->windowHeight/2 + (sin(bicycle->getX() /100) * 50) - bicycle->getY();
 
-    bicycle->PStep(GetFrameTime(), pcont->computeDelta(error, errory, dt));
+
+    bicycle->PStep(dt, pcont->computeDelta(error, errory, dt));
 
     if (prevDelta != delta || prevTheta != theta || prevVelocity != velocity || prevWheelbase != wheelbase){
         bicycle->Update(delta, theta, wheelbase, velocity);
+    }
+
+    if (prevK_p != k_p || prevK_i != k_i || prevK_y != k_y || prevK_d != k_d){
+        pcont->Update(k_p, k_y, k_i, k_d);
     }
 
     prevTheta = theta;
@@ -770,4 +838,152 @@ GameState WindowManager::FourthTask(float &prevDelta, float &prevTheta, float &p
 
 
     return FOURTH_TASK;
+}
+
+
+GameState WindowManager::FifthTask(BicycleController *bicycle, StanleyController *scont, float &error, float &errory){
+
+    // Checking if the trajectory has exited the screen boundaries. In that case
+    // it will create a messagebox showing an error.
+    float delta, theta, velocity, wheel, x, y, dt, wheelbase;
+    float prevTheta, prevDelta, prevWheelbase, prevVelocity;
+    float k;
+    float prevK;
+
+    bool error_msg = false, first = true, mainMenu = false;
+    Rectangle mainMenuRectangle = {20, 20, 60, 40};
+    Vector2 mousePosition = GetMousePosition();
+
+    float heading = 0;
+    float noise = 0;
+
+    //Random engine
+    std::mt19937 rng(std::random_device{}());
+
+    // uniform distribution random values
+    std::uniform_real_distribution<double> dist(0.0, 1.0);
+
+    theta = bicycle->getTheta();
+    delta = bicycle->getDelta();
+    velocity = bicycle->getVelocity();
+    wheelbase = bicycle->getWheelBase();
+    x = bicycle->getX();
+    y = bicycle->getY();
+
+    prevTheta = theta;
+    prevDelta = delta;
+    prevVelocity = velocity;
+    prevWheelbase = wheelbase;
+
+    k = scont->getK();
+
+    prevK = k;
+
+    dt = GetFrameTime();
+
+    if (x > this->windowWidth){
+        x = 0;
+        bicycle->setX(0);
+    }
+
+    
+
+
+    /* Getting current screen dimentions, calculate scaling based on width in order to have a window
+        * that is responsive
+        */
+
+    //scale = screenWidth / 800;
+    //fontSize = scale * baseFontSize;
+
+
+
+    // Draw
+    //----------------------------------------------------------------------------------
+    BeginDrawing();
+        ClearBackground(this->backgroundColor);
+
+        for (float f = 0; f < this->windowWidth; f+=0.1){
+            //DrawCircle(f, windowHeight/2, 2, RED);
+            DrawCircle(f, this->windowHeight/2 + (sin(f / 100) * 50), 2, RED);
+        }
+
+
+
+        DrawPoints();
+
+        DrawCircle(bicycle->getX(), bicycle->getY(), 2, WHITE);
+
+        SavePoint(bicycle->getX(), bicycle->getY());
+        DrawRectangleRec(mainMenuRectangle, LIGHTGRAY);
+        DrawText("Back", 25, 25, 18, BLACK);
+
+        // GUI controls
+        DrawVehicleSliders(wheelbase, velocity, delta, theta);
+
+        // P sliders
+        GuiSliderBar((Rectangle){this->windowWidth - this->windowWidth/5, this->windowHeight - 160, 120, 20}, "k", TextFormat("%.2f", k), &k, 0, 5);
+
+        if(CheckCollisionPointRec(mousePosition, mainMenuRectangle)){
+            DrawRectangleRec(mainMenuRectangle, RED);
+
+            if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+                mainMenu = true;
+            }
+
+        }
+
+
+    EndDrawing();
+
+
+    // noise that is set into the angle of the wheel. Still not the best thing
+    // but it will do for now. Probably an update could be to put it
+    // in the heading of the vehicle.
+    if (this->occupied % 500 == 0){
+        noise = (dist(rng) * 5);
+        bicycle->setDelta(abs(dist(rng) * 7 - 0.5));
+        bicycle->Step(dt);
+    }
+    // compute the error, calls scont that here is the PIDController and correct for it.
+    //error = heading - (bicycle->getTheta());
+
+    /* 
+        Compute angle using atan2 function which returns the angle from point A to point B
+        given the coordinates doing a simple subtraction. The idea is to smooth the angle using
+        x = 100 as a lookahead in order to make the path more accutate. Which is something
+        that i have not done in other parts of the project. Why do this? Because i got the idea
+        somewhere while researching pure pursuit and stanley where they looked ahead in order to make
+        a smoother turning, especially since we want to be in a point where x is the same for the wehicle
+        and the path (so the difference is equal to zero), while the y changes. If we get x=0 the problem 
+        is that it will try to correct heavily going up or down, so it will always overshoot the path that
+        we want to follow. Yes, this is an hack, yes i'm proud of it. No, i wont change the other task to
+        make it more accurate. This is why atan2(y difference, x look ahead to make it smoother).
+    */
+    error = atan2(this->windowHeight/2 + (sin(x / 100) * 50) - y, 100) - bicycle->getTheta();
+    //errory = screenHeight/2 - bicycle->getY();
+    errory = windowHeight/2 + (sin(bicycle->getX() /100) * 50) - bicycle->getY();
+
+
+    bicycle->PStep(dt, scont->computeDelta(error, errory, velocity));
+
+    if (prevDelta != delta || prevTheta != theta || prevVelocity != velocity || prevWheelbase != wheelbase){
+        bicycle->Update(delta, theta, wheelbase, velocity);
+    }
+
+    if (prevK != k){
+        scont->setK(k);
+    }
+
+    prevTheta = theta;
+    prevDelta = delta;
+    prevVelocity = velocity;
+    prevWheelbase = wheelbase;
+
+    if(mainMenu){
+        return MAIN_MENU;
+    }
+
+
+    return FIFTH_TASK;
 }
